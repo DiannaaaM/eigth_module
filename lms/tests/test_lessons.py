@@ -12,7 +12,9 @@ User = get_user_model()
 
 class LessonCRUDTests(APITestCase):
     def setUp(self):
-        self.user = User.objects.create_user(email='user@example.com', password='password123')
+        self.user = User.objects.create(email='user@example.com')
+        self.user.set_password('password123')
+        self.user.save()
         self.course = Course.objects.create(title='Test Course', description='Test', owner=self.user)
         self.moderator_group, _ = Group.objects.get_or_create(name='Модераторы')
         self.lesson_url = reverse('lesson-list-create')
@@ -48,7 +50,9 @@ class LessonCRUDTests(APITestCase):
         self.assertIn('video_link', response.data)
 
     def test_moderator_cannot_create_lesson(self):
-        moderator = User.objects.create_user(email='moderator@example.com', password='password123')
+        moderator = User.objects.create(email='moderator@example.com')
+        moderator.set_password('password123')
+        moderator.save()
         moderator.groups.add(self.moderator_group)
         self.client.force_authenticate(moderator)
 

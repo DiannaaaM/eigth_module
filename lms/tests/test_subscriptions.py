@@ -11,7 +11,9 @@ User = get_user_model()
 
 class CourseSubscriptionTests(APITestCase):
     def setUp(self):
-        self.user = User.objects.create_user(email='subscriber@example.com', password='password123')
+        self.user = User.objects.create(email='subscriber@example.com')
+        self.user.set_password('password123')
+        self.user.save()
         self.course = Course.objects.create(title='Subscription Course', description='Test', owner=self.user)
         self.subscription_url = reverse('course-subscription-toggle')
         self.course_detail_url = reverse('course-detail', args=[self.course.id])

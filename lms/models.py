@@ -74,3 +74,4 @@ class CourseSubscription(models.Model):
     def __str__(self):
         return f"{self.user.email} -> {self.course.title}"
 
+

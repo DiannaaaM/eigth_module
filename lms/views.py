@@ -7,6 +7,8 @@ from rest_framework.generics import (
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from drf_spectacular.utils import extend_schema, OpenApiParameter, OpenApiResponse
+from drf_spectacular.types import OpenApiTypes
 
 from .models import Course, Lesson, CourseSubscription
 from .serializers import (
@@ -20,7 +22,17 @@ from .paginators import CoursePagination, LessonPagination
 
 
 class CourseViewSet(viewsets.ModelViewSet):
-    """ViewSet для курсов"""
+    """
+    ViewSet для управления курсами.
+    
+    - Список курсов: GET /api/courses/
+    - Создание курса: POST /api/courses/
+    - Детали курса: GET /api/courses/{id}/
+    - Обновление курса: PUT/PATCH /api/courses/{id}/
+    - Удаление курса: DELETE /api/courses/{id}/
+    
+    Модераторы видят все курсы, обычные пользователи - только свои.
+    """
     queryset = Course.objects.all()
     serializer_class = CourseSerializer
     permission_classes = [CourseLessonPermission]
@@ -44,7 +56,15 @@ class CourseViewSet(viewsets.ModelViewSet):
 
 
 class LessonListCreateView(ListCreateAPIView):
-    """Представление для получения списка уроков и создания нового урока"""
+    """
+    Представление для получения списка уроков и создания нового урока.
+    
+    - Список уроков: GET /api/lessons/
+    - Создание урока: POST /api/lessons/
+    
+    Модераторы видят все уроки, обычные пользователи - только свои.
+    Видео-ссылки должны быть только с YouTube.
+    """
     queryset = Lesson.objects.all()
     permission_classes = [CourseLessonPermission]
     pagination_class = LessonPagination
@@ -72,7 +92,15 @@ class LessonListCreateView(ListCreateAPIView):
 
 
 class LessonRetrieveUpdateDestroyView(RetrieveUpdateDestroyAPIView):
-    """Представление для получения, обновления и удаления урока"""
+    """
+    Представление для получения, обновления и удаления урока.
+    
+    - Детали урока: GET /api/lessons/{id}/
+    - Обновление урока: PUT/PATCH /api/lessons/{id}/
+    - Удаление урока: DELETE /api/lessons/{id}/
+    
+    Модераторы могут управлять всеми уроками, обычные пользователи - только своими.
+    """
     queryset = Lesson.objects.all()
     permission_classes = [CourseLessonPermission]
 
@@ -98,6 +126,34 @@ class CourseSubscriptionToggleAPIView(APIView):
     """Управление подпиской пользователя на курс"""
     permission_classes = [IsAuthenticated]
 
+    @extend_schema(
+        summary='Переключить подписку на курс',
+        description='Добавляет или удаляет подписку пользователя на курс',
+        request={
+            'application/json': {
+                'type': 'object',
+                'properties': {
+                    'course': {
+                        'type': 'integer',
+                        'description': 'ID курса'
+                    }
+                },
+                'required': ['course']
+            }
+        },
+        responses={
+            200: OpenApiResponse(
+                response={
+                    'type': 'object',
+                    'properties': {
+                        'message': {'type': 'string'}
+                    }
+                },
+                description='Результат операции'
+            ),
+            400: OpenApiResponse(description='Ошибка валидации'),
+        }
+    )
     def post(self, request, *args, **kwargs):
         user = request.user
         course_id = request.data.get('course')

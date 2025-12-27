@@ -54,6 +54,13 @@ class CourseViewSet(viewsets.ModelViewSet):
         """Устанавливаем владельца при создании курса"""
         serializer.save(owner=self.request.user)
 
+    def perform_update(self, serializer):
+        """Обновляет курс и отправляет уведомления подписчикам"""
+        instance = serializer.save()
+        # Отправляем уведомления асинхронно
+        from .tasks import send_course_update_notification
+        send_course_update_notification.delay(instance.id)
+
 
 class LessonListCreateView(ListCreateAPIView):
     """
@@ -87,8 +94,11 @@ class LessonListCreateView(ListCreateAPIView):
             return Lesson.objects.filter(owner=user)
 
     def perform_create(self, serializer):
-        """Устанавливаем владельца при создании урока"""
-        serializer.save(owner=self.request.user)
+        """Устанавливаем владельца при создании урока и отправляет уведомления"""
+        lesson = serializer.save(owner=self.request.user)
+        # Отправляем уведомления асинхронно с проверкой на 4 часа
+        from .tasks import check_and_send_lesson_update_notification
+        check_and_send_lesson_update_notification.delay(lesson.id)
 
 
 class LessonRetrieveUpdateDestroyView(RetrieveUpdateDestroyAPIView):
@@ -120,6 +130,13 @@ class LessonRetrieveUpdateDestroyView(RetrieveUpdateDestroyAPIView):
         else:
             # Обычные пользователи видят только свои уроки
             return Lesson.objects.filter(owner=user)
+
+    def perform_update(self, serializer):
+        """Обновляет урок и отправляет уведомления подписчикам с проверкой на 4 часа"""
+        lesson = serializer.save()
+        # Отправляем уведомления асинхронно с проверкой на 4 часа
+        from .tasks import check_and_send_lesson_update_notification
+        check_and_send_lesson_update_notification.delay(lesson.id)
 
 
 class CourseSubscriptionToggleAPIView(APIView):

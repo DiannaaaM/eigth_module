@@ -8,10 +8,35 @@ class PaymentSerializer(serializers.ModelSerializer):
     course_title = serializers.CharField(source='course.title', read_only=True, allow_null=True)
     lesson_title = serializers.CharField(source='lesson.title', read_only=True, allow_null=True)
     payment_method_display = serializers.CharField(source='get_payment_method_display', read_only=True)
+    payment_status_display = serializers.CharField(source='get_payment_status_display', read_only=True)
 
     class Meta:
         model = Payment
         fields = '__all__'
+        read_only_fields = ('stripe_product_id', 'stripe_price_id', 'stripe_session_id', 'payment_url', 'payment_status')
+
+
+class PaymentCreateSerializer(serializers.ModelSerializer):
+    """Сериализатор для создания платежа"""
+    course = serializers.PrimaryKeyRelatedField(queryset=None, required=False, allow_null=True)
+    lesson = serializers.PrimaryKeyRelatedField(queryset=None, required=False, allow_null=True)
+
+    class Meta:
+        model = Payment
+        fields = ('course', 'lesson', 'amount', 'payment_method')
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        from lms.models import Course, Lesson
+        self.fields['course'].queryset = Course.objects.all()
+        self.fields['lesson'].queryset = Lesson.objects.all()
+
+    def validate(self, attrs):
+        if not attrs.get('course') and not attrs.get('lesson'):
+            raise serializers.ValidationError('Необходимо указать либо курс, либо урок')
+        if attrs.get('course') and attrs.get('lesson'):
+            raise serializers.ValidationError('Нельзя указывать одновременно курс и урок')
+        return attrs
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -38,7 +63,10 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         validated_data.pop('password_confirm')
-        user = User.objects.create_user(**validated_data)
+        password = validated_data.pop('password')
+        user = User.objects.create(**validated_data)
+        user.set_password(password)
+        user.save()
         return user
 
 

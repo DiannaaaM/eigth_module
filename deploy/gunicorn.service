@@ -1,0 +1,19 @@
+[Unit]
+Description=gunicorn daemon
+Requires=gunicorn.socket
+After=network.target
+
+[Service]
+User=deploy
+Group=www-data
+WorkingDirectory=/var/www/eigth_module
+EnvironmentFile=/var/www/eigth_module/.env
+ExecStart=/var/www/eigth_module/.venv/bin/gunicorn \
+    --access-logfile - \
+    --workers 3 \
+    --bind unix:/run/gunicorn.sock \
+    eigth_module.wsgi:application
+
+[Install]
+WantedBy=multi-user.target
+

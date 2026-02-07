@@ -3,7 +3,6 @@ djangorestframework
 Pillow
 django-filter
 djangorestframework-simplejwt
-python-dotenv
 psycopg2-binary
 drf-spectacular
 stripe

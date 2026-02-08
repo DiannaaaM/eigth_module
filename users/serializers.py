@@ -1,4 +1,5 @@
 from rest_framework import serializers
+from lms.models import Course, Lesson
 from .models import Payment, User
 
 
@@ -18,18 +19,20 @@ class PaymentSerializer(serializers.ModelSerializer):
 
 class PaymentCreateSerializer(serializers.ModelSerializer):
     """Сериализатор для создания платежа"""
-    course = serializers.PrimaryKeyRelatedField(queryset=None, required=False, allow_null=True)
-    lesson = serializers.PrimaryKeyRelatedField(queryset=None, required=False, allow_null=True)
+    course = serializers.PrimaryKeyRelatedField(
+        queryset=Course.objects.all(),
+        required=False,
+        allow_null=True,
+    )
+    lesson = serializers.PrimaryKeyRelatedField(
+        queryset=Lesson.objects.all(),
+        required=False,
+        allow_null=True,
+    )
 
     class Meta:
         model = Payment
         fields = ('course', 'lesson', 'amount', 'payment_method')
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        from lms.models import Course, Lesson
-        self.fields['course'].queryset = Course.objects.all()
-        self.fields['lesson'].queryset = Lesson.objects.all()
 
     def validate(self, attrs):
         if not attrs.get('course') and not attrs.get('lesson'):

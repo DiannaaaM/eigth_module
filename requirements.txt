@@ -7,3 +7,6 @@ psycopg2-binary
 drf-spectacular
 stripe
 gunicorn
+celery
+django-celery-beat
+redis

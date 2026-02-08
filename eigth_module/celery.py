@@ -2,6 +2,7 @@
 Настройка Celery для проекта
 """
 import os
+
 from celery import Celery
 from celery.schedules import crontab
 
@@ -26,15 +27,4 @@ app.conf.beat_schedule = {
 }
 
 app.conf.timezone = 'UTC'
-
-import os
-
-from celery import Celery
-
-
-os.environ.setdefault("DJANGO_SETTINGS_MODULE", "eigth_module.settings")
-
-app = Celery("eigth_module")
-app.config_from_object("django.conf:settings", namespace="CELERY")
-app.autodiscover_tasks()
 

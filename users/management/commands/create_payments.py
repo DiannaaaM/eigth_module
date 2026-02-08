@@ -1,6 +1,7 @@
 from django.core.management.base import BaseCommand
 from django.utils import timezone
 from decimal import Decimal
+from datetime import timedelta
 from users.models import User, Payment
 from lms.models import Course, Lesson
 
@@ -69,9 +70,6 @@ class Command(BaseCommand):
         ]
 
         created_count = 0
-        from django.utils import timezone
-        from datetime import timedelta
-        
         for i, payment_data in enumerate(payments_data):
             # Создаем платеж с разными датами (сейчас, вчера, позавчера и т.д.)
             if 'payment_date' not in payment_data:

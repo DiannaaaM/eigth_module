@@ -8,3 +8,4 @@ drf-spectacular
 stripe
 gunicorn
 celery
+django-celery-beat
